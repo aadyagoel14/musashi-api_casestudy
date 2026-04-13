@@ -33,6 +33,8 @@ export type Platform = 'polymarket' | 'kalshi';
 
 // Import feed types
 export type { AnalyzedTweet, TwitterAccount, GetFeedOptions } from '../types/feed';
+export type { WalletActivity, WalletPosition } from '../types/wallet';
+import type { WalletActivity, WalletPosition } from '../types/wallet';
 
 export interface Market {
   id: string;
@@ -115,6 +117,20 @@ export interface GetMoversOptions {
   minChange?: number;
   limit?: number;
   category?: string;
+}
+
+export interface GetWalletActivityOptions {
+  /** Max activity rows to request. */
+  limit?: number;
+  /** Optional ISO lower bound. */
+  since?: string;
+}
+
+export interface GetWalletPositionsOptions {
+  /** Current-value filter. */
+  minValue?: number;
+  /** Max position rows to request. */
+  limit?: number;
 }
 
 export interface HealthStatus {
@@ -282,6 +298,52 @@ export class MusashiAgent {
     }
 
     return response.data.movers;
+  }
+
+  /**
+   * Get recent Polymarket activity for a wallet.
+   *
+   * @param wallet - Public Polymarket wallet address.
+   * @param options - Activity filters.
+   */
+  async getWalletActivity(
+    wallet: string,
+    options?: GetWalletActivityOptions
+  ): Promise<WalletActivity[]> {
+    const params = new URLSearchParams({ wallet });
+    if (options?.limit) params.set('limit', options.limit.toString());
+    if (options?.since) params.set('since', options.since);
+
+    const response = await this.request(`/api/wallet/activity?${params.toString()}`);
+
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to fetch wallet activity');
+    }
+
+    return response.data.activity;
+  }
+
+  /**
+   * Get current Polymarket positions for a wallet.
+   *
+   * @param wallet - Public Polymarket wallet address.
+   * @param options - Position filters.
+   */
+  async getWalletPositions(
+    wallet: string,
+    options?: GetWalletPositionsOptions
+  ): Promise<WalletPosition[]> {
+    const params = new URLSearchParams({ wallet });
+    if (options?.minValue !== undefined) params.set('minValue', options.minValue.toString());
+    if (options?.limit) params.set('limit', options.limit.toString());
+
+    const response = await this.request(`/api/wallet/positions?${params.toString()}`);
+
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to fetch wallet positions');
+    }
+
+    return response.data.positions;
   }
 
   /**
@@ -659,6 +721,34 @@ export async function getArbitrage(options?: GetArbitrageOptions): Promise<Arbit
 export async function getMovers(options?: GetMoversOptions): Promise<MarketMover[]> {
   const agent = new MusashiAgent();
   return agent.getMovers(options);
+}
+
+/**
+ * Quick helper to get wallet activity without creating an agent instance.
+ *
+ * @param wallet - Public Polymarket wallet address.
+ * @param options - Activity filters.
+ */
+export async function getWalletActivity(
+  wallet: string,
+  options?: GetWalletActivityOptions
+): Promise<WalletActivity[]> {
+  const agent = new MusashiAgent();
+  return agent.getWalletActivity(wallet, options);
+}
+
+/**
+ * Quick helper to get wallet positions without creating an agent instance.
+ *
+ * @param wallet - Public Polymarket wallet address.
+ * @param options - Position filters.
+ */
+export async function getWalletPositions(
+  wallet: string,
+  options?: GetWalletPositionsOptions
+): Promise<WalletPosition[]> {
+  const agent = new MusashiAgent();
+  return agent.getWalletPositions(wallet, options);
 }
 
 // Export default instance for convenience
