@@ -3,6 +3,7 @@
 
 import { Market, MarketMatch, ArbitrageOpportunity } from '../types/market';
 import { analyzeSentiment, SentimentResult } from './sentiment-analyzer';
+import { calibrateProbability, daysUntilResolution } from './calibrated-probability';
 
 export type SignalType = 'arbitrage' | 'news_event' | 'sentiment_shift' | 'user_interest';
 export type UrgencyLevel = 'low' | 'medium' | 'high' | 'critical';
