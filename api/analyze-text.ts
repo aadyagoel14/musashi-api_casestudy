@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { KeywordMatcher } from '../src/analysis/keyword-matcher';
 import { generateSignal, TradingSignal } from '../src/analysis/signal-generator';
+import { computeSignalExpiry } from '../src/analysis/signal-expiry';
 import { getMarkets, getArbitrage, getMarketMetadata } from './lib/market-cache';
 
 function isMalformedJsonError(error: unknown): boolean {
@@ -172,7 +173,13 @@ export default async function handler(
         markets: signal.matches,
         matchCount: signal.matches.length,
         timestamp: new Date().toISOString(),
-        suggested_action: signal.suggested_action,
+        suggested_action: {
+          ...signal.suggested_action,
+          ...computeSignalExpiry({
+            urgency: signal.urgency,
+            signal_type: signal.signal_type,
+          }),
+        },
         sentiment: signal.sentiment,
         arbitrage: signal.arbitrage,
         metadata: {
