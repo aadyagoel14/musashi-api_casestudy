@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getMarkets, getArbitrage, getMarketMetadata } from '../lib/market-cache';
+import { enrichArbitrageList } from '../../src/analysis/arbitrage-net';
 
 export default async function handler(
   req: VercelRequest,
@@ -82,10 +83,18 @@ export default async function handler(
 
     // Apply additional filters client-side
     // Note: opportunities are already sorted by spread descending from detectArbitrage()
-    opportunities = opportunities
-      .filter(arb => arb.confidence >= minConfidenceNum)
-      .filter(arb => !category || arb.polymarket.category === category || arb.kalshi.category === category)
-      .slice(0, limitNum);
+    // opportunities = opportunities
+    //   .filter(arb => arb.confidence >= minConfidenceNum)
+    //   .filter(arb => !category || arb.polymarket.category === category || arb.kalshi.category === category)
+    //   .slice(0, limitNum);
+
+    //edit:
+    opportunities = enrichArbitrageList(
+      opportunities
+        .filter(arb => arb.confidence >= minConfidenceNum)
+        .filter(arb => !category || arb.polymarket.category === category || arb.kalshi.category === category)
+        .slice(0, limitNum)
+    );
 
     // Stage 0: Get freshness metadata
     const freshnessMetadata = getMarketMetadata();
