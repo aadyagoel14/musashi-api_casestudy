@@ -11,9 +11,12 @@ export type Direction = 'YES' | 'NO' | 'HOLD';
 
 export interface SuggestedAction {
   direction: Direction;
-  confidence: number; // 0-1
-  edge: number; // Expected profit edge
+  confidence: number;
+  edge: number;
   reasoning: string;
+  calibrated_probability?: number;
+  signal_strength?: number;
+  market_implied?: number;
 }
 
 export interface TradingSignal {
@@ -290,6 +293,23 @@ export function generateSignal(
 
   // Generate suggested action
   const suggested_action = generateSuggestedAction(topMarket, sentiment, edge, urgency);
+
+  // Attach calibrated probability to directional signals
+  if (suggested_action.direction !== 'HOLD') {
+    const cal = calibrateProbability({
+      marketPrice: topMarket.yesPrice,
+      direction: suggested_action.direction,
+      sentiment,
+      matchConfidence: topMatch.confidence,
+      matchedKeywordCount: topMatch.matchedKeywords.length,
+      isBreakingNews: isBreakingNews(tweetText),
+      volume24h: topMarket.volume24h,
+      daysToResolution: daysUntilResolution(topMarket),
+    });
+    suggested_action.calibrated_probability = cal.probability;
+    suggested_action.signal_strength = cal.signal_strength;
+    suggested_action.market_implied = cal.market_implied;
+  }
 
   return {
     event_id: generateEventId(tweetText),
