@@ -6,6 +6,10 @@
       "destination": "/api/analyze-text.ts"
     },
     {
+      "source": "/api/size-position",
+      "destination": "/api/size-position.ts"
+    },
+    {
       "source": "/api/ground-probability",
       "destination": "/api/ground-probability.ts"
     },
